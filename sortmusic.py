@@ -5,46 +5,49 @@ from mutagen.mp3 import MP3
 from mutagen.id3 import ID3
 from mutagen.easyid3 import EasyID3
 import shutil
+import datetime
 
-mypath = "/Users/marius/Music/"
-musicLoccationPath = "/Users/marius/Music/musiccollection/"
-musicCollectionName = "musiccollection"
+syncPath = "/Users/marius/Music/"
+musicLocationPath = "/Users/marius/Music/music.collection/"
+musicCollectionName = "music.collection"
 
 def organizeMusicCollection(targetLocation, newLocation):
     if not os.path.exists(newLocation):
         os.makedirs(newLocation)
 
+    # make this function recursive
     for (root, directories, filenames) in walk(targetLocation):
         for filename in filenames:
             filePath = os.path.join(root, filename)
-            id3 = ID3Read(filePath)
-            if id3:
-                genre = id3.get('genre', ['unknown'])
-                pathTree = getGenreTree(genre[0], getMusicGenres()).replace('.', os.path.sep)+os.path.sep
-
-                if not os.path.exists(newLocation+pathTree):
-                    os.makedirs(newLocation+pathTree)
-
-            #    print('copy from '+filePath+' >>> '+os.path.join(newLocation, pathTree, filename))
-                shutil.copyfile(filePath, os.path.join(newLocation, pathTree, filename))
+            processFile(filename, filePath, newLocation)
 
         for directory in directories:
-
             for filename in filenames:
-                print(directory)
                 if directory != musicCollectionName:
                     filePath = os.path.join(root, directory, filename)
-                    id3 = ID3Read(filePath)
-                    if id3:
-                        genre = id3.get('genre', ['unknown'])
-                        pathTree = getGenreTree(genre[0], getMusicGenres()).replace('.', os.path.sep)+os.path.sep
-
-                        if not os.path.exists(newLocation+pathTree):
-                            os.makedirs(newLocation+pathTree)
-
-                            #print('copy from '+filePath+' >>> '+os.path.join(newLocation, pathTree, filename))
-                        shutil.copyfile(filePath, os.path.join(newLocation, pathTree, filename))
+                    processFile(filename, filePath, newLocation)
         return
+
+def processFile(filename, filePath, newLocation):
+    id3 = ID3Read(filePath)
+    if id3:
+        genre = id3.get('genre', ['unknown'])
+        timestamp = os.path.getctime(filePath)
+        year = datetime.datetime.fromtimestamp(int(timestamp)).strftime('%Y')
+
+        month = datetime.datetime.fromtimestamp(int(timestamp)).strftime('%B')
+
+        pathTree = getGenreTree(genre[0], getMusicGenres()).replace('.', os.path.sep)+os.path.sep+year+os.path.sep+month+os.path.sep
+
+        #create dir with year / month
+        if not os.path.exists(newLocation+pathTree):
+            os.makedirs(newLocation+pathTree)
+
+        #print('copy from '+filePath+' >>> '+os.path.join(newLocation, pathTree, filename))
+        print('processing ... '+filePath)
+
+        shutil.copyfile(filePath, os.path.join(newLocation, pathTree, filename))
+    return
 
 def ID3Read(file):
     id3 = False
@@ -62,70 +65,11 @@ def ID3Read(file):
 def ID3ReadGenre(id3):
     return id3['genre']
 
-def getMusicGenres2():
-    genres = {
-        'electronic' : {
-            'edm' : 'edm',
-            'ambient' : {
-                'ambient dub' : 'ambient dub',
-                'dark ambient' : 'dark ambient',
-                'drone music' : 'drone music',
-                'space music' : 'space music',
-                'illbient' : 'illbient',
-                'psybient' : 'psybient',
-                'isolationism' : 'isolationism',
-                'lowercase' : 'lowercase'
-            },
-            'house' : {
-                'acid house' : 'acid house',
-                'ambient house' : 'ambient house',
-                'balearic beat' : 'balearic beat',
-                'chicago house' : 'chicago house',
-                'deep house' : {
-                    'future house',
-                    'tropical house'
-                },
-                'bouncy house' : 'bouncy house',
-                'diva house' : 'diva house',
-                'handbag house' : 'handbag house',
-                'electro house' : {
-                    'big room' : 'big room',
-                    'complextro' : 'complextro',
-                    'melbourne bounce' : 'melbourne bounce',
-                    'fidget house' : 'fidget house',
-                    'dutch house' : 'dutch house',
-                    'moombahton' : {'moombahcore' : 'moombahcore'},
-                    'electro swing' : 'electro swing',
-                    'french house' : 'french house',
-                    'funky house' : 'funky house',
-                    'garage house' : 'garage house',
-                    'ghetto house' : {'ghettotech' : 'ghettotech'},
-                    'hardbag' : 'hardbag',
-                    'hard house' : {'hard nrg' : {'nu nrg'}},
-                    'hip house' : 'hip house',
-                    'italo house' : 'italo house',
-                    'jazz house' : 'jazz house',
-                    'kwaito' : 'kwaito',
-                    'latin house' : 'latin house',
-                    'micro house' : 'micro house',
-                    'minimal house' : 'minimal house',
-                    'new beat' : 'new beat',
-                    'outsider house' : 'outsider house',
-                    'progressive house' : 'progressive house',
-                    'rara tech' : 'rara tech',
-                    'tech house' : 'tech house',
-                    'tribal house' : 'tribal house',
-                    'trival' : 'trival',
-                    'witch house' : 'witch house'
-                }
-            }
-        }
-    }
-    return genres
-
 def getMusicGenres():
     genres = {
+        #edm
         'edm' : 'electronic.edm',
+        #house
         'house' : 'electronic.house',
         'acid house' : 'electronic.house.acid house',
         'ambient house' : 'electronic.house.ambient house',
@@ -169,11 +113,69 @@ def getMusicGenres():
         'tech house' : 'electronic.house.tech house',
         'tribal house' : 'electronic.house.tribal house',
         'trival' : 'electronic.house.trival',
-        'witch house' : 'electronic.house.witch house'
+        'witch house' : 'electronic.house.witch house',
+        #ambient
+        'ambient' : 'electronic.ambient',
+        'ambient dub' : 'electronic.ambient.ambient dub',
+        'dark ambient' : 'electronic.ambient.dark ambient',
+        'drone music' : 'electronic.ambient.drone music',
+        'space music' : 'electronic.ambient.space music',
+        'illbient' : 'electronic.ambient.illbient',
+        'psybient' : 'electronic.ambient.psybient',
+        'isolationism' : 'electronic.ambient.isolationism',
+        'lowercase' : 'electronic.ambient.lowercase',
+        #asian underground
+        'asian underground' : 'electronic.asian underground',
+        #break beat
+        'breakbeat' : 'electronic.breakbeat',
+        'acid breaks' : 'electronic.breakbeat.acid breaks',
+        'baltimore club' : 'electronic.breakbeat.baltimore club',
+        'big beat' : 'electronic.breakbeat.big beat',
+        'broken beat' : 'electronic.breakbeat.broken beat',
+        'florida breaks' : 'electronic.breakbeat.florida breaks',
+        'nu funk' : 'electronic.breakbeat.florida breaks.nu funk',
+        'miami bass' : 'electronic.breakbeat.florida breaks.miami bass',
+        'jersey club' : 'electronic.breakbeat.jersey club',
+        'nu skool breaks' : 'electronic.breakbeat.nu skull breaks',
+        #disco
+        'disco' : 'electronic.disco',
+        'Afro' : 'electronic.disco.afro',
+        'cosmic disco' : 'electronic.disco.cosmic disco',
+        'disco polo' : 'electronic.disco.disco polo',
+        'euro disco' : 'electronic.disco.euro disco',
+        'italo disco' : 'electronic.disco.italo disco',
+        'nu disco' : 'electronic.disco.nu disco',
+        'space disco' : 'electronic.disco.space disco',
+        #trance
+        'trance' : 'electronic.trance',
+        'acid trance' : 'electronic.trance.acid trance',
+        'balearic trance' : 'electronic.trance.balearic trance',
+        'dream trance' : 'electronic.trance.dream trance',
+        'goa trance' : 'electronic.trance.goa trance',
+        'hard trance' : 'electronic.trance.hard trance',
+        'nitzhonot' : 'electronic.trance.nitzhonot',
+        'psychedelic trance' : 'electronic.trance.psychedelic trance',
+        'suomisaundi' : 'electronic.trance.psychedelic trance.suomisaundi',
+        'full on' : 'electronic.trance.psychedelic trance.full on',
+        'progressive trance' : 'electronic.trance.progressive trance',
+        'tech trance' : 'electronic.trance.tech trance',
+        'uplifting trance' : 'electronic.trance.uplifting trance',
+        'vocal trance' : 'electronic.trance.vocal trance',
+        #techno
+        'techno' : 'electronic.techno',
+        'acid techno' : 'electronic.techno.acid techno',
+        'detroit techno' : 'electronic.techno.detroit techno',
+        'dub techno' : 'electronic.techno.dub techno',
+        'free tekno' : 'electronic.techno.free tekno',
+        'minimal techno' : 'electronic.techno.minimal techno',
+        'nortec' : 'electronic.techno.nortec',
+        'tecno brega' : 'electronic.techno.techno brega',
+        'techdombe' : 'electronic.techno.techdombe',
+        'blues' : 'blues'
     }
     return genres
 
 def getGenreTree(selectedGenre, genres):
     return genres.get(selectedGenre, 'unknown')
 
-organizeMusicCollection(mypath, musicLoccationPath);
+organizeMusicCollection(syncPath, musicLocationPath);
