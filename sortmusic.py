@@ -7,31 +7,50 @@ from mutagen.easyid3 import EasyID3
 import shutil
 import datetime
 
-syncPath = "/Users/marius/Music/"
-musicLocationPath = "/Users/marius/Music/music.collection/"
+#syncPath = u'/Users/marius/Music/'
+#musicLocationPath = u'/Users/marius/Music/music.collection/'
+syncPath = u'/Volumes/Volume_1/music'
+musicLocationPath = u'/Volumes/Volume_1/music/music.collection/'
 musicCollectionName = "music.collection"
+unknownGenreFiles = 0
+missingGenreID3 = 0
+verboseLevel = 1
+
+totalFiles = len(os.listdir(syncPath))
+processedFiles = 0
+
 
 def organizeMusicCollection(targetLocation, newLocation):
     if not os.path.exists(newLocation):
         os.makedirs(newLocation)
 
-    # make this function recursive
-    for (root, directories, filenames) in walk(targetLocation):
+    walkSyncPath(targetLocation, newLocation)
+
+    return
+
+def walkSyncPath(targetLocation, newLocation, readOnly = False):
+    if targetLocation.find(musicCollectionName) > 0:
+        return
+    processedFiles = 0
+
+    for (root, directories, filenames) in os.walk(targetLocation):
         for filename in filenames:
             filePath = os.path.join(root, filename)
-            processFile(filename, filePath, newLocation)
+            if not filePath.find(musicCollectionName) > 0:
+                processFile(filename, filePath, newLocation, readOnly)
+                processedFiles = processedFiles + 1
+                if verboseLevel >= 1:
+                    percentage = processedFiles / totalFiles
+                    print('Progress: ', round(percentage, 2))
+    return
 
-        for directory in directories:
-            for filename in filenames:
-                if directory != musicCollectionName:
-                    filePath = os.path.join(root, directory, filename)
-                    processFile(filename, filePath, newLocation)
-        return
-
-def processFile(filename, filePath, newLocation):
+def processFile(filename, filePath, newLocation, readOnly = False):
     id3 = ID3Read(filePath)
     if id3:
         genre = id3.get('genre', ['unknown'])
+        if genre[0].find('unknown') > 0:
+            missingGenreID3+=1
+
         timestamp = os.path.getctime(filePath)
         year = datetime.datetime.fromtimestamp(int(timestamp)).strftime('%Y')
 
@@ -39,14 +58,24 @@ def processFile(filename, filePath, newLocation):
 
         pathTree = getGenreTree(genre[0], getMusicGenres()).replace('.', os.path.sep)+os.path.sep+year+os.path.sep+month+os.path.sep
 
+        if pathTree.find('unknown') > 0:
+            unknownGenreFiles+=1
+
         #create dir with year / month
-        if not os.path.exists(newLocation+pathTree):
+        if not os.path.exists(newLocation+pathTree) and not readOnly:
             os.makedirs(newLocation+pathTree)
 
-        #print('copy from '+filePath+' >>> '+os.path.join(newLocation, pathTree, filename))
-        print('processing ... '+filePath)
+        if verboseLevel >= 2:
+            print('copy from '+filePath+' >>> '+os.path.join(newLocation, pathTree, filename))
 
-        shutil.copyfile(filePath, os.path.join(newLocation, pathTree, filename))
+        if verboseLevel >= 1:
+            print('processing ... '+filePath)
+
+        try:
+            if not readOnly:
+                shutil.copyfile(filePath, os.path.join(newLocation, pathTree, filename))
+        except Exception as e:
+            pass
     return
 
 def ID3Read(file):
@@ -61,6 +90,11 @@ def ID3Read(file):
             pass
 
     return id3
+
+def scanGenres(targetLocation):
+    walkSyncPath(targetLocation, musicLocationPath, True)
+
+    return
 
 def ID3ReadGenre(id3):
     return id3['genre']
@@ -171,7 +205,68 @@ def getMusicGenres():
         'nortec' : 'electronic.techno.nortec',
         'tecno brega' : 'electronic.techno.techno brega',
         'techdombe' : 'electronic.techno.techdombe',
-        'blues' : 'blues'
+        'blues' : 'blues',
+        #pop
+        'pop' : 'pop',
+        'dance' : 'pop.dance pop',
+        'adult contemporary' : 'pop.adult contemporary',
+        'arab pop' : 'pop.arab pop',
+        'baroque pop' : 'pop.baroque pop',
+        'britpop' : 'pop.britpop',
+        'bubblegum pop' : 'pop.bubblegum pop',
+        'canción' : 'pop.canción',
+        'canzone' : 'pop.canzone',
+        'chalga' : 'pop.chalga',
+        'chanson' : 'pop.chanson',
+        'christian pop' : 'pop.christian pop',
+        'classical crossover' : 'pop.classical crossover',
+        'country pop' : 'pop.country pop',
+        'c-pop' : 'pop.c-pop',
+        'mandopop' : 'pop.c-pop.mandopop',
+        'disco polo' : 'pop.disco polo',
+        'electropop' : 'pop.electropop',
+        'europop' : 'pop.europop',
+        'austropop' : 'pop.europop.austropop',
+        'eurobeat' : 'pop.europop.eurobeat',
+        'french pop' : 'pop.europop.french pop',
+        'italo dance' : 'pop.europop.italo dance',
+        'italo disco' : 'pop.europop.italo disco',
+        'laïkó' : 'pop.europop.laïkó',
+        'latin pop' : 'pop.europop.latin pop',
+        'nederpop' : 'pop.europop.nederpop',
+        'russian pop' : 'pop.europop.russian pop',
+        'fado' : 'pop.fado',
+        'folk pop' : 'pop.folk pop',
+        'iranian pop' : 'pop.iranian pop',
+        'indie pop' : 'pop.indie pop',
+        'j-pop' : 'pop.j-pop',
+        'jangle pop' : 'pop.jangle pop',
+        'k-pop' : 'pop.k-pop',
+        'latin ballad' : 'pop.latin ballad',
+        'louisiana swamp pop' : 'pop.louisiana swamp pop',
+        'mexican pop' : 'pop.mexican pop',
+        'new romanticism' : 'pop.new romanticism',
+        'operatic pop' : 'pop.operatic pop',
+        'pop rap' : 'pop.pop rap',
+        'pop rock' : 'pop.pop rock',
+        'power pop' : 'pop.pop rock.power pop',
+        'soft rock' : 'pop.pop rock.soft rock',
+        'pop soul' : 'pop.pop soul',
+        'progressive pop' : 'pop.progressive pop',
+        'psychedelic pop' : 'pop.psychedelic pop',
+        'rebetiko' : 'pop.rebetiko',
+        'schlager' : 'pop.schlager',
+        'sophisti-pop' : 'pop.sophisti-pop',
+        'space age pop' : 'pop.space age pop',
+        'sunshine pop' : 'pop.sunshine pop',
+        'surf pop' : 'pop.surf pop',
+        'synthpop' : 'pop.synthpop',
+        'teen pop' : 'pop.teen pop',
+        'traditional pop music' : 'pop.traditional pop music',
+        'turkish pop' : 'pop.turkish pop',
+        'vispop' : 'pop.vispop',
+        'wonky pop' : 'pop.wonky pop',
+        'worldbeat' : 'pop.worldbeat'
     }
     return genres
 
@@ -179,3 +274,7 @@ def getGenreTree(selectedGenre, genres):
     return genres.get(selectedGenre, 'unknown')
 
 organizeMusicCollection(syncPath, musicLocationPath);
+#scanGenres(syncPath)
+
+print('Files missing genre ID3: ', missingGenreID3)
+print('Files missing genre collection: ', unknownGenreFiles)
