@@ -583,7 +583,7 @@ def getMusicGenres():
         'post-grunge' : 'rock.alternative rock.grunge.post-grunge',
         'indie rock' : 'rock.alternative rock.indie rock',
         'dunedin sound' : 'rock.alternative rock.indie rock.dunedin sound',
-        'post-punk revival' : 'rock.indie rock.post-punk revival,
+        'post-punk revival' : 'rock.indie rock.post-punk revival',
         'industrial rock' : 'rock.alternative rock.industrial rock',
         'post-rock' : 'rock.alternative rock.post-rock',
         'post-metal' : 'rock.alternative rock.post-rock.post-metal',
