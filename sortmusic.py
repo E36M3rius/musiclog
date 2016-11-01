@@ -8,7 +8,7 @@ import shutil
 import datetime
 
 if os.name == 'nt':
-    sourcePath = u'\\\\DLINK-00445C\\Volume_1\\music\\'
+    sourcePath = u'\\\\DLINK-00445C\\Volume_1\\music\\syncbox\\'
     scanPath = u'\\\\DLINK-00445C\\Volume_1\\music\\music.collection\\unknown\\'
     destinationPath = u'\\\\DLINK-00445C\\Volume_1\\music\\music.collection\\'
 elif os.name == 'mac':
@@ -41,34 +41,36 @@ def processFile(filename, filePath, newLocation, readOnly = False):
     id3 = ID3Read(filePath)
     if id3:
         genre = id3.get('genre', ['unknown'])
+    else:
+        genre = ['unknown']
+        
+    timestamp = os.path.getctime(filePath)
+    year = datetime.datetime.fromtimestamp(int(timestamp)).strftime('%Y')
 
-        timestamp = os.path.getctime(filePath)
-        year = datetime.datetime.fromtimestamp(int(timestamp)).strftime('%Y')
+    month = datetime.datetime.fromtimestamp(int(timestamp)).strftime('%B')
 
-        month = datetime.datetime.fromtimestamp(int(timestamp)).strftime('%B')
+    genreTree = getGenreTree(genre[0].split('s,')[0], getMusicGenres())
+    if genreTree == 'unknown':
+        #try one more time
+        genreTree = getGenreTree(''.join(reversed(genre[0].split(' '))), getMusicGenres())
 
-        genreTree = getGenreTree(genre[0].split('s,')[0], getMusicGenres())
-        if genreTree == 'unknown':
-            #try one more time
-            genreTree = getGenreTree(''.join(reversed(genre[0].split(' '))), getMusicGenres())
+    pathTree = genreTree.replace('.', os.path.sep)+os.path.sep+year+os.path.sep+month+os.path.sep
 
-        pathTree = genreTree.replace('.', os.path.sep)+os.path.sep+year+os.path.sep+month+os.path.sep
+    #create dir with year / month
+    if not os.path.exists(newLocation+pathTree) and not readOnly:
+        os.makedirs(newLocation+pathTree)
 
-        #create dir with year / month
-        if not os.path.exists(newLocation+pathTree) and not readOnly:
-            os.makedirs(newLocation+pathTree)
+    if verboseLevel >= 2:
+        print('copy from '+filePath+' >>> '+os.path.join(newLocation, pathTree, filename))
 
-        if verboseLevel >= 2:
-            print('copy from '+filePath+' >>> '+os.path.join(newLocation, pathTree, filename))
+    if verboseLevel >= 1:
+        print('processing ... '+filePath)
 
-        if verboseLevel >= 1:
-            print('processing ... '+filePath)
-
-        try:
-            if not readOnly:
-                shutil.move(filePath, os.path.join(newLocation, pathTree, filename))
-        except Exception as e:
-            pass
+    try:
+        if not readOnly:
+            shutil.move(filePath, os.path.join(newLocation, pathTree, filename))
+    except Exception as e:
+        pass
     return
 
 def ID3Read(file):
