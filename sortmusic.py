@@ -48,9 +48,10 @@ def processFile(filename, filePath, newLocation, readOnly = False):
         month = datetime.datetime.fromtimestamp(int(timestamp)).strftime('%B')
 
         genreTree = getGenreTree(genre[0].split('s,')[0], getMusicGenres())
-        #if genreTree == 'unknown':
+        if genreTree == 'unknown':
             #try one more time
-            #genreTree = getGenreTree(''.join(genre[0].split()[::-1]), getMusicGenres())
+            genreTree = getGenreTree(''.join(reversed(genre[0].split(' ')))), getMusicGenres())
+
         pathTree = genreTree.replace('.', os.path.sep)+os.path.sep+year+os.path.sep+month+os.path.sep
 
         #create dir with year / month
@@ -459,7 +460,7 @@ def getMusicGenres():
     return genres
 
 def getGenreTree(selectedGenre, genres):
-    return genres.get(selectedGenre, 'unknown')
+    return genres.get(selectedGenre.lowercase(), 'unknown')
 
 if SCAN_MODE == 1:
     scanGenres(scanPath)
