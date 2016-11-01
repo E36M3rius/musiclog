@@ -50,7 +50,7 @@ def processFile(filename, filePath, newLocation, readOnly = False):
         genreTree = getGenreTree(genre[0].split('s,')[0], getMusicGenres())
         if genreTree == 'unknown':
             #try one more time
-            genreTree = getGenreTree(''.join(reversed(genre[0].split(' ')))), getMusicGenres())
+            genreTree = getGenreTree(''.join(reversed(genre[0].split(' '))), getMusicGenres())
 
         pathTree = genreTree.replace('.', os.path.sep)+os.path.sep+year+os.path.sep+month+os.path.sep
 
@@ -460,7 +460,7 @@ def getMusicGenres():
     return genres
 
 def getGenreTree(selectedGenre, genres):
-    return genres.get(selectedGenre.lowercase(), 'unknown')
+    return genres.get(selectedGenre.lower(), 'unknown')
 
 if SCAN_MODE == 1:
     scanGenres(scanPath)
