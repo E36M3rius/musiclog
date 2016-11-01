@@ -66,7 +66,7 @@ def processFile(filename, filePath, newLocation, readOnly = False):
 
         try:
             if not readOnly:
-                shutil.copyfile(filePath, os.path.join(newLocation, pathTree, filename))
+                shutil.move(filePath, os.path.join(newLocation, pathTree, filename))
         except Exception as e:
             pass
     return
